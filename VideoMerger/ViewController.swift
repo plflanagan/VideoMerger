@@ -13,16 +13,16 @@ import AVKit
 class VideoComposer {
     let composition = AVMutableComposition()
 
-    // make main video instruction
     let mainInstruction = AVMutableVideoCompositionInstruction()
 
-    func overlapVideos(avAsset: AVAsset, completion: @escaping (AVAssetExportSession) -> Void) {
+    let duration: CMTime
 
-        // timeframe will match first video for this example
-        mainInstruction.timeRange = CMTimeRangeMake(start: .zero, duration: avAsset.duration)
+    init(duration: CMTime) {
+        self.duration = duration
+        mainInstruction.timeRange = CMTimeRangeMake(start: .zero, duration: duration)
+    }
 
-        add(avAsset: avAsset)
-
+    func createVideo(completion: @escaping (AVAssetExportSession) -> Void) {
 
 //        guard let secondTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
 //            assertionFailure()
@@ -60,42 +60,7 @@ class VideoComposer {
 //        mainInstruction.layerInstructions.append(thirdVideoLayerInstruction)
 //
 //
-//        // add image layer
-//        let image = UIImage(named: "image")!
-//
-//        let movieLength = TimeInterval(firstAsset.duration.seconds)
-//        let searchPaths1 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
-//        let documentDirectory1 = searchPaths1[0]
-//        let filePath1 = documentDirectory1.appending("output1.mov")
-//        let outputUrl1 = URL(fileURLWithPath: filePath1)
-//
-//
-//
-//        ImageVideoCreator.writeSingleImageToMovie(image: image, movieLength: movieLength, outputFileURL: outputUrl1) { success in
-//            print("success: \(success)")
-//
-//            // make first video track and add to composition
-//            let imageAsset = AVAsset(url: outputUrl1)
-//
-//            guard let imageTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-//                assertionFailure()
-//                return
-//            }
-//            try! imageTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: firstAsset.duration), of: imageAsset.tracks(withMediaType: .video)[0], at: .zero)
-//
-//            // add layer instruction for first video
-//            let imageVideoLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: imageTrack)
-//
-//            // size = 486 widh 154
-//            // full size = CGSize(width: 640, height: 480)?
-//
-//            let imageScale = CGAffineTransform(scaleX: 640 / 486, y: 486 / 154)
-//
-//            imageVideoLayerInstruction.setTransform(imageScale, at: .zero)
-//
-//            mainInstruction.layerInstructions.append(imageVideoLayerInstruction)
-//
-//        }
+
 
 
 
@@ -104,7 +69,6 @@ class VideoComposer {
         videoComposition.instructions = [mainInstruction]
         videoComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
         videoComposition.renderSize = CGSize(width: 640, height: 480)
-
 
         // export
         let searchPaths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
@@ -135,7 +99,7 @@ class VideoComposer {
         }
     }
 
-    private func add(avAsset: AVAsset) {
+    func add(avAsset: AVAsset) {
 
         guard let track = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
             assertionFailure()
@@ -152,6 +116,43 @@ class VideoComposer {
 
         mainInstruction.layerInstructions.append(videoLayerInstruction)
     }
+
+    func add(image: UIImage) {
+
+        let movieLength = TimeInterval(duration.seconds)
+        let searchPaths1 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
+        let documentDirectory1 = searchPaths1[0]
+        let filePath1 = documentDirectory1.appending("output1.mov")
+        let outputUrl1 = URL(fileURLWithPath: filePath1)
+
+        ImageVideoCreator.writeSingleImageToMovie(image: image, movieLength: movieLength, outputFileURL: outputUrl1) { [weak self] success in
+            print("success: \(success)")
+            guard let `self` = self else {
+                return
+            }
+
+            // make first video track and add to composition
+            let imageAsset = AVAsset(url: outputUrl1)
+
+            guard let imageTrack = self.composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
+                assertionFailure()
+                return
+            }
+            try! imageTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: self.duration), of: imageAsset.tracks(withMediaType: .video)[0], at: .zero)
+
+            // add layer instruction for first video
+            let imageVideoLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: imageTrack)
+
+            // size = 486 widh 154
+            // full size = CGSize(width: 640, height: 480)?
+
+            let imageScale = CGAffineTransform(scaleX: 640 / 486, y: 486 / 154)
+
+            imageVideoLayerInstruction.setTransform(imageScale, at: .zero)
+
+            self.mainInstruction.layerInstructions.append(imageVideoLayerInstruction)
+        }
+    }
 }
 
 class ViewController: UIViewController {
@@ -163,11 +164,17 @@ class ViewController: UIViewController {
             assertionFailure()
             return
         }
-
         // make second video track and add to composition
         let asset = AVAsset(url: pathUrl)
 
-        VideoComposer().overlapVideos(avAsset: asset) { [weak self] exporter in
+        // add image layer
+        let image = UIImage(named: "image")!
+
+        let composer = VideoComposer(duration: asset.duration)
+        composer.add(avAsset: asset)
+        composer.add(image: image)
+
+        composer.createVideo() { [weak self] exporter in
             self?.didFinish(session: exporter)
         }
     }
@@ -191,7 +198,6 @@ class ViewController: UIViewController {
             self.player.player?.play()
         }
     }
-
 }
 
 class ImageVideoCreator {
