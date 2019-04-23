@@ -12,12 +12,13 @@ import AVKit
 
 class VideoComposer {
     let composition = AVMutableComposition()
-
     let mainInstruction = AVMutableVideoCompositionInstruction()
-
     let duration: CMTime
+    let videoSize: CGSize
 
     init(view: UIView) {
+
+        videoSize = view.frame.size
 
         var minDuration: CMTime = CMTime(seconds: 15, preferredTimescale: 600)
         view.subviews.forEach { subview in
@@ -28,7 +29,7 @@ class VideoComposer {
         self.duration = minDuration
         mainInstruction.timeRange = CMTimeRangeMake(start: .zero, duration: minDuration)
 
-        view.subviews.forEach { subview in
+        view.subviews.reversed().forEach { subview in
             if let avView = subview as? AVPlayerView {
                 addVideo(of: avView)
 
@@ -48,7 +49,7 @@ class VideoComposer {
         let videoComposition = AVMutableVideoComposition()
         videoComposition.instructions = [mainInstruction]
         videoComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
-        videoComposition.renderSize = CGSize(width: 640, height: 480)
+        videoComposition.renderSize = videoSize
 
         // export
         let searchPaths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
@@ -71,15 +72,13 @@ class VideoComposer {
         exporter.outputURL = outputUrl
 
         exporter.exportAsynchronously {
-            DispatchQueue.main.async { //[weak self] in
-//                let endTime = DispatchTime.now()
-//                print("time required: \((endTime.uptimeNanoseconds - startTime.uptimeNanoseconds) / 1_000_000_000 )s")
+            DispatchQueue.main.async {
                 completion(exporter)
             }
         }
     }
 
-    func addVideo(of avView: AVPlayerView) {
+    private func addVideo(of avView: AVPlayerView) {
         guard
             let track = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid),
             let asset = avView.videoPlayer.currentItem?.asset,
@@ -98,7 +97,7 @@ class VideoComposer {
         mainInstruction.layerInstructions.append(videoLayerInstruction)
     }
 
-    func addImage(of imageView: UIImageView) {
+    private func addImage(of imageView: UIImageView) {
         guard let image = imageView.image else {
             assertionFailure("no image")
             return
@@ -142,6 +141,14 @@ class ViewController: UIViewController {
             return
         }
 
+        let image = UIImage(named: "image")
+        let imageView = UIImageView(image: image)
+        view.addSubview(imageView)
+        // size = 486 widh 154
+        // full size = CGSize(width: 640, height: 480)?
+        let imageScale = CGAffineTransform(scaleX: view.frame.width / 486, y: view.frame.height / 154)
+        imageView.transform = imageScale
+
         let firstAsset = AVAsset(url: pathUrl)
         let firstAvView = PlayerViewFactory.makePlayerView(with: firstAsset)
         view.addSubview(firstAvView)
@@ -164,13 +171,6 @@ class ViewController: UIViewController {
         let thirdRotate = CGAffineTransform(rotationAngle: 20)
         thirdAvView.transform = thirdMove.concatenating(thirdScale).concatenating(thirdRotate)
 
-        let image = UIImage(named: "image")
-        let imageView = UIImageView(image: image)
-        view.addSubview(imageView)
-        // size = 486 widh 154
-        // full size = CGSize(width: 640, height: 480)?
-        let imageScale = CGAffineTransform(scaleX: 640 / 486, y: 486 / 154)
-        imageView.transform = imageScale
 
         let composer = VideoComposer(view: view)
 
