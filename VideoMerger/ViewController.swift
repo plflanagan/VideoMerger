@@ -17,52 +17,32 @@ class VideoComposer {
 
     let duration: CMTime
 
-    init(duration: CMTime) {
-        self.duration = duration
-        mainInstruction.timeRange = CMTimeRangeMake(start: .zero, duration: duration)
+    init(view: UIView) {
+
+        var minDuration: CMTime = CMTime(seconds: 15, preferredTimescale: 600)
+        view.subviews.forEach { subview in
+            if let avView = subview as? AVPlayerView, let duration = avView.videoPlayer.currentItem?.duration {
+                minDuration = min(minDuration, duration)
+            }
+        }
+        self.duration = minDuration
+        mainInstruction.timeRange = CMTimeRangeMake(start: .zero, duration: minDuration)
+
+        view.subviews.forEach { subview in
+            if let avView = subview as? AVPlayerView {
+                addVideo(of: avView)
+
+            }
+            else if let imageView = subview as? UIImageView {
+                addImage(of: imageView)
+            }
+            else {
+                print("unhandled view type")
+            }
+        }
     }
 
     func createVideo(completion: @escaping (AVAssetExportSession) -> Void) {
-
-//        guard let secondTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-//            assertionFailure()
-//            return
-//        }
-//        try! secondTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: secondAsset.duration), of: secondAsset.tracks(withMediaType: .video)[0], at: .zero)
-//
-//        // add layer instruction for second video
-//        let secondVideoLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: secondTrack)
-//        let secondMove = CGAffineTransform(translationX: -500, y: -500)
-//        let secondScale = CGAffineTransform(scaleX: 0.2, y: 0.2)
-//
-//        secondVideoLayerInstruction.setTransform(secondMove.concatenating(secondScale), at: .zero)
-//
-//        mainInstruction.layerInstructions.append(secondVideoLayerInstruction)
-//
-//
-//        // make third video track and add to composition
-//        let thirdAsset = AVAsset(url: pathUrl)
-//
-//        guard let thirdTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-//            assertionFailure()
-//            return
-//        }
-//        try! thirdTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: thirdAsset.duration), of: thirdAsset.tracks(withMediaType: .video)[0], at: .zero)
-//
-//        // add layer instruction for third video
-//        let thirdVideoLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: thirdTrack)
-//        let thirdMove = CGAffineTransform(translationX: 1000, y: 0)
-//        let thirdScale = CGAffineTransform(scaleX: 0.2, y: 0.2)
-//        let thirdRotate = CGAffineTransform(rotationAngle: 20)
-//
-//        thirdVideoLayerInstruction.setTransform(thirdMove.concatenating(thirdScale).concatenating(thirdRotate), at: .zero)
-//
-//        mainInstruction.layerInstructions.append(thirdVideoLayerInstruction)
-//
-//
-
-
-
 
         // make video composition
         let videoComposition = AVMutableVideoComposition()
@@ -99,8 +79,7 @@ class VideoComposer {
         }
     }
 
-    func add(avView: AVPlayerView) {
-
+    func addVideo(of avView: AVPlayerView) {
         guard
             let track = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid),
             let asset = avView.videoPlayer.currentItem?.asset,
@@ -119,7 +98,11 @@ class VideoComposer {
         mainInstruction.layerInstructions.append(videoLayerInstruction)
     }
 
-    func add(image: UIImage) {
+    func addImage(of imageView: UIImageView) {
+        guard let image = imageView.image else {
+            assertionFailure("no image")
+            return
+        }
 
         let movieLength = TimeInterval(duration.seconds)
         let searchPaths1 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
@@ -133,7 +116,6 @@ class VideoComposer {
                 return
             }
 
-            // make first video track and add to composition
             let imageAsset = AVAsset(url: outputUrl1)
 
             guard let imageTrack = self.composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
@@ -142,15 +124,8 @@ class VideoComposer {
             }
             try! imageTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: self.duration), of: imageAsset.tracks(withMediaType: .video)[0], at: .zero)
 
-            // add layer instruction for first video
             let imageVideoLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: imageTrack)
-
-            // size = 486 widh 154
-            // full size = CGSize(width: 640, height: 480)?
-
-            let imageScale = CGAffineTransform(scaleX: 640 / 486, y: 486 / 154)
-
-            imageVideoLayerInstruction.setTransform(imageScale, at: .zero)
+            imageVideoLayerInstruction.setTransform(imageView.transform, at: .zero)
 
             self.mainInstruction.layerInstructions.append(imageVideoLayerInstruction)
         }
@@ -167,20 +142,37 @@ class ViewController: UIViewController {
             return
         }
 
-        // make second video track and add to composition
-        let asset = AVAsset(url: pathUrl)
+        let firstAsset = AVAsset(url: pathUrl)
+        let firstAvView = PlayerViewFactory.makePlayerView(with: firstAsset)
+        view.addSubview(firstAvView)
+        let firstMove = CGAffineTransform(translationX: 1000, y: 400)
+        let firstScale = CGAffineTransform(scaleX: 0.2, y: 0.2)
+        firstAvView.transform = firstMove.concatenating(firstScale)
 
-        let avView = PlayerViewFactory.makePlayerView(with: asset)
-        let move = CGAffineTransform(translationX: 1000, y: 400)
-        let scale = CGAffineTransform(scaleX: 0.2, y: 0.2)
-        avView.transform = move.concatenating(scale)
+        let secondAsset = AVAsset(url: pathUrl)
+        let secondAvView = PlayerViewFactory.makePlayerView(with: secondAsset)
+        view.addSubview(secondAvView)
+        let secondMove = CGAffineTransform(translationX: -500, y: -500)
+        let secondScale = CGAffineTransform(scaleX: 0.2, y: 0.2)
+        secondAvView.transform = secondMove.concatenating(secondScale)
 
-        // add image layer
-        let image = UIImage(named: "image")!
+        let thirdAsset = AVAsset(url: pathUrl)
+        let thirdAvView = PlayerViewFactory.makePlayerView(with: thirdAsset)
+        view.addSubview(thirdAvView)
+        let thirdMove = CGAffineTransform(translationX: 1000, y: 0)
+        let thirdScale = CGAffineTransform(scaleX: 0.2, y: 0.2)
+        let thirdRotate = CGAffineTransform(rotationAngle: 20)
+        thirdAvView.transform = thirdMove.concatenating(thirdScale).concatenating(thirdRotate)
 
-        let composer = VideoComposer(duration: asset.duration)
-        composer.add(avView: avView)
-        composer.add(image: image)
+        let image = UIImage(named: "image")
+        let imageView = UIImageView(image: image)
+        view.addSubview(imageView)
+        // size = 486 widh 154
+        // full size = CGSize(width: 640, height: 480)?
+        let imageScale = CGAffineTransform(scaleX: 640 / 486, y: 486 / 154)
+        imageView.transform = imageScale
+
+        let composer = VideoComposer(view: view)
 
         composer.createVideo() { [weak self] exporter in
             self?.didFinish(session: exporter)
