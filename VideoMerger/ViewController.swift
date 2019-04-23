@@ -99,20 +99,22 @@ class VideoComposer {
         }
     }
 
-    func add(avAsset: AVAsset) {
+    func add(avView: AVPlayerView) {
 
-        guard let track = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-            assertionFailure()
-            return
+        guard
+            let track = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid),
+            let asset = avView.videoPlayer.currentItem?.asset,
+            let videoTrack = asset.tracks(withMediaType: .video).first
+            else {
+                assertionFailure()
+                return
         }
-        try! track.insertTimeRange(CMTimeRangeMake(start: .zero, duration: avAsset.duration), of: avAsset.tracks(withMediaType: .video)[0], at: .zero)
+        try! track.insertTimeRange(CMTimeRangeMake(start: .zero, duration: asset.duration), of: videoTrack, at: .zero)
 
         // add layer instruction for first video
         let videoLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
-        let move = CGAffineTransform(translationX: 1000, y: 400)
-        let scale = CGAffineTransform(scaleX: 0.2, y: 0.2)
 
-        videoLayerInstruction.setTransform(move.concatenating(scale), at: .zero)
+        videoLayerInstruction.setTransform(avView.transform, at: .zero)
 
         mainInstruction.layerInstructions.append(videoLayerInstruction)
     }
@@ -164,14 +166,20 @@ class ViewController: UIViewController {
             assertionFailure()
             return
         }
+
         // make second video track and add to composition
         let asset = AVAsset(url: pathUrl)
+
+        let avView = PlayerViewFactory.makePlayerView(with: asset)
+        let move = CGAffineTransform(translationX: 1000, y: 400)
+        let scale = CGAffineTransform(scaleX: 0.2, y: 0.2)
+        avView.transform = move.concatenating(scale)
 
         // add image layer
         let image = UIImage(named: "image")!
 
         let composer = VideoComposer(duration: asset.duration)
-        composer.add(avAsset: asset)
+        composer.add(avView: avView)
         composer.add(image: image)
 
         composer.createVideo() { [weak self] exporter in
