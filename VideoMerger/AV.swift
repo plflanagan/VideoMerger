@@ -43,6 +43,7 @@ public class AVPlayerView: UIView {
         let image = getImage(from: player)
         let imageView = UIImageView(image: image)
         addSubview(imageView)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.topAnchor.constraint(equalTo: topAnchor).isActive = true
         imageView.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
         imageView.trailingAnchor.constraint(equalTo: trailingAnchor).isActive = true
@@ -50,6 +51,7 @@ public class AVPlayerView: UIView {
 
         let videoView = VideoView(player: player)
         addSubview(videoView)
+        videoView.translatesAutoresizingMaskIntoConstraints = false
         videoView.topAnchor.constraint(equalTo: topAnchor).isActive = true
         videoView.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
         videoView.trailingAnchor.constraint(equalTo: trailingAnchor).isActive = true

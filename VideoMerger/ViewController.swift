@@ -51,16 +51,19 @@ class VideoComposer {
         videoComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
         videoComposition.renderSize = videoSize
 
+        export(videoComposition: videoComposition) { (session) in
+            completion(session)
+        }
+    }
+
+    private func export(videoComposition: AVMutableVideoComposition, completion: @escaping (AVAssetExportSession) -> Void) {
         // export
-        let searchPaths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
-        let documentDirectory = searchPaths[0]
-        let filePath = documentDirectory.appending("output.mov")
-        let outputUrl = URL(fileURLWithPath: filePath)
+        let url = filePath().appendingPathComponent("output.mov")
 
         let fileManager = FileManager.default
 
-        if fileManager.fileExists(atPath: filePath) {
-            try! fileManager.removeItem(at: outputUrl)
+        if fileManager.fileExists(atPath: url.path) {
+            try! fileManager.removeItem(at: url)
         }
 
         guard let exporter = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality) else {
@@ -69,7 +72,7 @@ class VideoComposer {
         }
         exporter.videoComposition = videoComposition
         exporter.outputFileType = .mov
-        exporter.outputURL = outputUrl
+        exporter.outputURL = url
 
         exporter.exportAsynchronously {
             DispatchQueue.main.async {
@@ -97,6 +100,16 @@ class VideoComposer {
         mainInstruction.layerInstructions.append(videoLayerInstruction)
     }
 
+    private func filePath() -> URL {
+        let fileManager = FileManager.default
+        let urls = fileManager.urls(for: .documentDirectory, in: .userDomainMask)
+        guard let documentDirectory = urls.first else {
+            fatalError("documentDir Error")
+        }
+
+        return documentDirectory
+    }
+
     private func addImage(of imageView: UIImageView) {
         guard let image = imageView.image else {
             assertionFailure("no image")
@@ -104,18 +117,20 @@ class VideoComposer {
         }
 
         let movieLength = TimeInterval(duration.seconds)
-        let searchPaths1 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
-        let documentDirectory1 = searchPaths1[0]
-        let filePath1 = documentDirectory1.appending("output1.mov")
-        let outputUrl1 = URL(fileURLWithPath: filePath1)
 
-        ImageVideoCreator.writeSingleImageToMovie(image: image, movieLength: movieLength, outputFileURL: outputUrl1) { [weak self] success in
+        let url = filePath().appendingPathComponent("output1.mov")
+//        let searchPaths1 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
+//        let documentDirectory1 = searchPaths1[0]
+//        let filePath1 = documentDirectory1.appending("output1.mov")
+//        let outputUrl1 = URL(fileURLWithPath: filePath1)
+
+        ImageVideoCreator.writeSingleImageToMovie(image: image, movieLength: movieLength, outputFileURL: url) { [weak self] success in
             print("success: \(success)")
             guard let `self` = self else {
                 return
             }
 
-            let imageAsset = AVAsset(url: outputUrl1)
+            let imageAsset = AVAsset(url: url)
 
             guard let imageTrack = self.composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
                 assertionFailure()
@@ -146,31 +161,60 @@ class ViewController: UIViewController {
         view.addSubview(imageView)
         // size = 486 widh 154
         // full size = CGSize(width: 640, height: 480)?
-        let imageScale = CGAffineTransform(scaleX: view.frame.width / 486, y: view.frame.height / 154)
-        imageView.transform = imageScale
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.topAnchor.constraint(equalTo: view.topAnchor, constant: 100).isActive = true
+        imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 100).isActive = true
+        imageView.widthAnchor.constraint(equalToConstant: 486).isActive = true
+        imageView.heightAnchor.constraint(equalToConstant: 154).isActive = true
+
+        
 
         let firstAsset = AVAsset(url: pathUrl)
         let firstAvView = PlayerViewFactory.makePlayerView(with: firstAsset)
         view.addSubview(firstAvView)
-        let firstMove = CGAffineTransform(translationX: 1000, y: 400)
+        firstAvView.translatesAutoresizingMaskIntoConstraints = false
+        firstAvView.topAnchor.constraint(equalTo: view.topAnchor, constant: 300).isActive = true
+        firstAvView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        firstAvView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8).isActive = true
+        firstAvView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.8).isActive = true
+
+        let firstRotate = CGAffineTransform(rotationAngle: -20)
         let firstScale = CGAffineTransform(scaleX: 0.2, y: 0.2)
-        firstAvView.transform = firstMove.concatenating(firstScale)
+        firstAvView.transform = firstRotate.concatenating(firstScale)
+
+
 
         let secondAsset = AVAsset(url: pathUrl)
         let secondAvView = PlayerViewFactory.makePlayerView(with: secondAsset)
         view.addSubview(secondAvView)
-        let secondMove = CGAffineTransform(translationX: -500, y: -500)
+        secondAvView.translatesAutoresizingMaskIntoConstraints = false
+        secondAvView.topAnchor.constraint(equalTo: view.topAnchor, constant: 100).isActive = true
+        secondAvView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10).isActive = true
+        secondAvView.widthAnchor.constraint(equalTo: view.widthAnchor, constant: 100).isActive = true
+        secondAvView.heightAnchor.constraint(equalTo: view.heightAnchor, constant: 100).isActive = true
+
+        let secondRotate = CGAffineTransform(rotationAngle: 50)
         let secondScale = CGAffineTransform(scaleX: 0.2, y: 0.2)
-        secondAvView.transform = secondMove.concatenating(secondScale)
+        secondAvView.transform = secondRotate.concatenating(secondScale)
+
+
 
         let thirdAsset = AVAsset(url: pathUrl)
         let thirdAvView = PlayerViewFactory.makePlayerView(with: thirdAsset)
         view.addSubview(thirdAvView)
+        thirdAvView.translatesAutoresizingMaskIntoConstraints = false
+        thirdAvView.topAnchor.constraint(equalTo: view.topAnchor, constant: 100).isActive = true
+        thirdAvView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        thirdAvView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+        thirdAvView.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
         let thirdMove = CGAffineTransform(translationX: 1000, y: 0)
         let thirdScale = CGAffineTransform(scaleX: 0.2, y: 0.2)
         let thirdRotate = CGAffineTransform(rotationAngle: 20)
         thirdAvView.transform = thirdMove.concatenating(thirdScale).concatenating(thirdRotate)
+    }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
 
         let composer = VideoComposer(view: view)
 
