@@ -9,6 +9,21 @@
 import UIKit
 import AVFoundation
 import AVKit
+import Photos
+
+private func filePath() -> URL {
+    let fileManager = FileManager.default
+    let urls = fileManager.urls(for: .documentDirectory, in: .userDomainMask)
+    guard let documentDirectory = urls.first else {
+        fatalError("documentDir Error")
+    }
+    //        let searchPaths1 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
+    //        let documentDirectory1 = searchPaths1[0]
+    //        let filePath1 = documentDirectory1.appending("output1.mov")
+    //        let outputUrl1 = URL(fileURLWithPath: filePath1)
+
+    return documentDirectory
+}
 
 class VideoComposer {
     let composition = AVMutableComposition()
@@ -16,9 +31,19 @@ class VideoComposer {
     let duration: CMTime
     let videoSize: CGSize
 
+    // use this to increase the quality of the video
+    var viewSizeMultiplier: CGFloat = 5.0
+
     init(view: UIView) {
 
-        videoSize = view.frame.size
+        // this determines the quality of the video
+//        videoSize = CGSize(width: view.frame.width * viewSizeMultiplier, height: view.frame.height * viewSizeMultiplier)
+        videoSize = CGSize(width: 1772.0, height: 3840.0)
+        viewSizeMultiplier = 1772.0 / view.frame.width
+
+        print("view: \(videoSize.width / viewSizeMultiplier) - \(videoSize.height / viewSizeMultiplier)")
+        print("video: \(videoSize)")
+        print("multiplier: \(viewSizeMultiplier)\n")
 
         var minDuration: CMTime = CMTime(seconds: 15, preferredTimescale: 600)
         view.subviews.forEach { subview in
@@ -48,7 +73,7 @@ class VideoComposer {
         // make video composition
         let videoComposition = AVMutableVideoComposition()
         videoComposition.instructions = [mainInstruction]
-        videoComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
+        videoComposition.frameDuration = CMTimeMake(value: 1, timescale: 60)
         videoComposition.renderSize = videoSize
 
         export(videoComposition: videoComposition) { (session) in
@@ -94,20 +119,10 @@ class VideoComposer {
 
         // add layer instruction for first video
         let videoLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
-
-        videoLayerInstruction.setTransform(avView.transform, at: .zero)
+        print("video")
+        setTransform(on: videoLayerInstruction, of: avView, andOf: videoTrack)
 
         mainInstruction.layerInstructions.append(videoLayerInstruction)
-    }
-
-    private func filePath() -> URL {
-        let fileManager = FileManager.default
-        let urls = fileManager.urls(for: .documentDirectory, in: .userDomainMask)
-        guard let documentDirectory = urls.first else {
-            fatalError("documentDir Error")
-        }
-
-        return documentDirectory
     }
 
     private func addImage(of imageView: UIImageView) {
@@ -118,35 +133,106 @@ class VideoComposer {
 
         let movieLength = TimeInterval(duration.seconds)
 
-        let url = filePath().appendingPathComponent("output1.mov")
-//        let searchPaths1 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
-//        let documentDirectory1 = searchPaths1[0]
-//        let filePath1 = documentDirectory1.appending("output1.mov")
-//        let outputUrl1 = URL(fileURLWithPath: filePath1)
+        let url = filePath().appendingPathComponent("output4.mov")
 
         ImageVideoCreator.writeSingleImageToMovie(image: image, movieLength: movieLength, outputFileURL: url) { [weak self] success in
-            print("success: \(success)")
+
             guard let `self` = self else {
                 return
             }
 
+            // TODO: This likely won't capture the video properly when file is created for first time.
             let imageAsset = AVAsset(url: url)
 
-            guard let imageTrack = self.composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-                assertionFailure()
-                return
-            }
-            try! imageTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: self.duration), of: imageAsset.tracks(withMediaType: .video)[0], at: .zero)
+            let keys = ["playable", "readable", "composable", "tracks", "exportable"]
+            var error: NSError? = nil
 
-            let imageVideoLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: imageTrack)
-            imageVideoLayerInstruction.setTransform(imageView.transform, at: .zero)
+//            imageAsset.loadValuesAsynchronously(forKeys: keys, completionHandler: {
+//                DispatchQueue.main.async {
+//                    keys.forEach({ key in
+//                        let status = imageAsset.statusOfValue(forKey: key, error: &error)
+//                        switch status {
+//                        case .loaded:
+//                            print("loaded. \(error)")
+//                        case .loading:
+//                            print("loading. \(error)")
+//                        case .failed:
+//                            print("failed. \(error)")
+//                        case .cancelled:
+//                            print("cancelled. \(error)")
+//                        case .unknown:
+//                            print("unknown. \(error)")
+//                        }
+//                    })
 
-            self.mainInstruction.layerInstructions.append(imageVideoLayerInstruction)
-        }
+                    guard
+                        let imageTrack = self.composition.addMutableTrack(
+                            withMediaType: .video,
+                            preferredTrackID: kCMPersistentTrackID_Invalid),
+                        let imageVideoTrack = imageAsset.tracks(withMediaType: .video).first
+                        else {
+                            assertionFailure()
+                            return
+                    }
+
+                    try! imageTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: self.duration), of: imageVideoTrack, at: .zero)
+
+                    let imageVideoLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: imageTrack)
+
+                    print("image")
+
+                    self.setTransform(on: imageVideoLayerInstruction, of: imageView, andOf: imageVideoTrack)
+                    self.mainInstruction.layerInstructions.append(imageVideoLayerInstruction)
+                }
+//            })
+//        }
+    }
+
+    private func setTransform(on instruction: AVMutableVideoCompositionLayerInstruction, of view: UIView, andOf assetTrack: AVAssetTrack) {
+
+        let parentSize = CGSize(
+            width: videoSize.width / viewSizeMultiplier,
+            height: videoSize.height / viewSizeMultiplier
+        )
+
+        let assetSize = CGSize(
+            width: view.frame.width * viewSizeMultiplier / assetTrack.naturalSize.width,
+            height: view.frame.height * viewSizeMultiplier / assetTrack.naturalSize.height
+        )
+
+        let ratioSize = CGSize(
+            width: assetTrack.naturalSize.width / view.frame.width,
+            height: assetTrack.naturalSize.height / view.frame.height
+        )
+
+        let assetOrigin = CGPoint(
+            x: view.frame.origin.x * ratioSize.width,
+            y: view.frame.origin.y * ratioSize.height
+        )
+
+        print("view.frame: \(view.frame)")
+        print("natural: \(assetTrack.naturalSize)")
+        print("assetOrigin: \(assetOrigin)")
+        print("assetSize: \(assetSize)")
+
+        print("New Frame: (\(assetOrigin.x), \(assetOrigin.y), \(assetTrack.naturalSize.width * assetSize.width), \(assetTrack.naturalSize.height * assetSize.height))\n")
+
+        let move = CGAffineTransform(
+            translationX: assetOrigin.x,
+            y: assetOrigin.y
+        )
+        let scale = CGAffineTransform(
+            scaleX: assetSize.width,
+            y: assetSize.height
+        )
+
+        instruction.setTransform(move.concatenating(scale).concatenating(view.transform), at: .zero)
     }
 }
 
 class ViewController: UIViewController {
+
+    let videoView = UIView()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -156,70 +242,69 @@ class ViewController: UIViewController {
             return
         }
 
+        //(14 30; 347 752)
+        view.addSubview(videoView)
+//        view.translatesAutoresizingMaskIntoConstraints = false
+        videoView.frame = CGRect(x: 14, y: 30, width: 347, height: 752)
+
         let image = UIImage(named: "image")
         let imageView = UIImageView(image: image)
-        view.addSubview(imageView)
-        // size = 486 widh 154
-        // full size = CGSize(width: 640, height: 480)?
+        videoView.addSubview(imageView)
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.topAnchor.constraint(equalTo: view.topAnchor, constant: 100).isActive = true
-        imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 100).isActive = true
-        imageView.widthAnchor.constraint(equalToConstant: 486).isActive = true
-        imageView.heightAnchor.constraint(equalToConstant: 154).isActive = true
+        imageView.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 0).isActive = true
+        imageView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: 0).isActive = true
+        imageView.widthAnchor.constraint(equalToConstant: image!.size.width / 4).isActive = true
+        imageView.heightAnchor.constraint(equalToConstant: image!.size.height / 4).isActive = true
 
-        
+
 
         let firstAsset = AVAsset(url: pathUrl)
         let firstAvView = PlayerViewFactory.makePlayerView(with: firstAsset)
-        view.addSubview(firstAvView)
+        videoView.addSubview(firstAvView)
         firstAvView.translatesAutoresizingMaskIntoConstraints = false
-        firstAvView.topAnchor.constraint(equalTo: view.topAnchor, constant: 300).isActive = true
-        firstAvView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        firstAvView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8).isActive = true
-        firstAvView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.8).isActive = true
-
-        let firstRotate = CGAffineTransform(rotationAngle: -20)
-        let firstScale = CGAffineTransform(scaleX: 0.2, y: 0.2)
-        firstAvView.transform = firstRotate.concatenating(firstScale)
+        firstAvView.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 100).isActive = true
+        firstAvView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: 50).isActive = true
+        firstAvView.widthAnchor.constraint(equalToConstant: 1280.0 / 2).isActive = true
+        firstAvView.heightAnchor.constraint(equalToConstant: 720 / 2).isActive = true
+//        let firstRotate = CGAffineTransform(rotationAngle: -20)
+//        firstAvView.transform = firstRotate
 
 
 
         let secondAsset = AVAsset(url: pathUrl)
         let secondAvView = PlayerViewFactory.makePlayerView(with: secondAsset)
-        view.addSubview(secondAvView)
+        videoView.addSubview(secondAvView)
         secondAvView.translatesAutoresizingMaskIntoConstraints = false
-        secondAvView.topAnchor.constraint(equalTo: view.topAnchor, constant: 100).isActive = true
-        secondAvView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10).isActive = true
-        secondAvView.widthAnchor.constraint(equalTo: view.widthAnchor, constant: 100).isActive = true
-        secondAvView.heightAnchor.constraint(equalTo: view.heightAnchor, constant: 100).isActive = true
-
-        let secondRotate = CGAffineTransform(rotationAngle: 50)
-        let secondScale = CGAffineTransform(scaleX: 0.2, y: 0.2)
-        secondAvView.transform = secondRotate.concatenating(secondScale)
+        secondAvView.topAnchor.constraint(equalTo: videoView.topAnchor).isActive = true
+        secondAvView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: image!.size.width / 4).isActive = true
+        secondAvView.widthAnchor.constraint(equalToConstant: 1280.0 / 2).isActive = true
+        secondAvView.heightAnchor.constraint(equalToConstant: 720.0 / 2).isActive = true
+//        let secondRotate = CGAffineTransform(rotationAngle: 50)
+//        secondAvView.transform = secondRotate
 
 
 
-        let thirdAsset = AVAsset(url: pathUrl)
-        let thirdAvView = PlayerViewFactory.makePlayerView(with: thirdAsset)
-        view.addSubview(thirdAvView)
-        thirdAvView.translatesAutoresizingMaskIntoConstraints = false
-        thirdAvView.topAnchor.constraint(equalTo: view.topAnchor, constant: 100).isActive = true
-        thirdAvView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        thirdAvView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
-        thirdAvView.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
-        let thirdMove = CGAffineTransform(translationX: 1000, y: 0)
-        let thirdScale = CGAffineTransform(scaleX: 0.2, y: 0.2)
-        let thirdRotate = CGAffineTransform(rotationAngle: 20)
-        thirdAvView.transform = thirdMove.concatenating(thirdScale).concatenating(thirdRotate)
+//        let thirdAsset = AVAsset(url: pathUrl)
+//        let thirdAvView = PlayerViewFactory.makePlayerView(with: thirdAsset)
+//        view.addSubview(thirdAvView)
+//        thirdAvView.translatesAutoresizingMaskIntoConstraints = false
+//        thirdAvView.topAnchor.constraint(equalTo: view.topAnchor, constant: 100).isActive = true
+//        thirdAvView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+//        thirdAvView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.2).isActive = true
+//        thirdAvView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.2).isActive = true
+//        let thirdRotate = CGAffineTransform(rotationAngle: 20)
+//        thirdAvView.transform = thirdRotate
     }
+
+    var composer: VideoComposer?
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        let composer = VideoComposer(view: view)
+        composer = VideoComposer(view: videoView)
 
-        composer.createVideo() { [weak self] exporter in
-            self?.didFinish(session: exporter)
+        composer?.createVideo() { exporter in
+            self.didFinish(session: exporter)
         }
     }
 
@@ -228,19 +313,27 @@ class ViewController: UIViewController {
             assertionFailure()
             return
         }
-        showVideo(videoUrl: url)
+        self.saveVideo(videoUrl: url)
     }
 
     let player = AVPlayerViewController()
 
     func showVideo(videoUrl: URL) {
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 2) {
+            let videoPlayer = AVPlayer(url: videoUrl)
+            self.player.player = videoPlayer
 
-        let videoPlayer = AVPlayer(url: videoUrl)
-        player.player = videoPlayer
-
-        self.present(player, animated: true) {
-            self.player.player?.play()
+            self.present(self.player, animated: true) {
+                self.player.player?.play()
+            }
         }
+    }
+
+    private func saveVideo(videoUrl: URL) {
+        PHPhotoLibrary.shared().performChanges({
+            PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: videoUrl)
+            print("exported")
+        })
     }
 }
 
@@ -276,10 +369,18 @@ class ImageVideoCreator {
 
 
     static func writeSingleImageToMovie(image: UIImage, movieLength: TimeInterval, outputFileURL: URL, completion: @escaping (Bool) -> ()) {
+
+//        let fileManager = FileManager.default
+//
+//        if fileManager.fileExists(atPath: outputFileURL.path) {
+//            try! fileManager.removeItem(at: outputFileURL)
+//        }
+
         do {
             let imageSize = image.size
+
             let videoWriter = try AVAssetWriter(outputURL: outputFileURL, fileType: AVFileType.mov)
-            let videoSettings: [String: Any] = [AVVideoCodecKey: AVVideoCodecH264,
+            let videoSettings: [String: Any] = [AVVideoCodecKey: AVVideoCodecType.h264,
                                                 AVVideoWidthKey: imageSize.width,
                                                 AVVideoHeightKey: imageSize.height]
             let videoWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: videoSettings)
@@ -294,9 +395,8 @@ class ImageVideoCreator {
 
             videoWriter.startWriting()
             let timeScale: Int32 = 600 // recommended in CMTime for movies.
-            let halfMovieLength = Float64(movieLength/2.0) // videoWriter assumes frame lengths are equal.
-            let startFrameTime = CMTimeMake(value: 0, timescale: timeScale)
-            let endFrameTime = CMTimeMakeWithSeconds(halfMovieLength, preferredTimescale: timeScale)
+            let startFrameTime = CMTimeMake(value: 0, timescale: 600)
+            let endFrameTime = CMTimeMakeWithSeconds(movieLength, preferredTimescale: timeScale)
             videoWriter.startSession(atSourceTime: startFrameTime)
 
             guard let cgImage = image.cgImage else {
@@ -304,14 +404,16 @@ class ImageVideoCreator {
                 return
             }
             let buffer: CVPixelBuffer = self.pixelBuffer(fromImage: cgImage, size: imageSize)!
+
             while !adaptor.assetWriterInput.isReadyForMoreMediaData { usleep(10) }
-            adaptor.append(buffer, withPresentationTime: startFrameTime)
+            let first = adaptor.append(buffer, withPresentationTime: startFrameTime)
             while !adaptor.assetWriterInput.isReadyForMoreMediaData { usleep(10) }
-            adaptor.append(buffer, withPresentationTime: endFrameTime)
+            let second = adaptor.append(buffer, withPresentationTime: endFrameTime)
+
+            print("\(first) \(second)")
 
             videoWriterInput.markAsFinished()
             videoWriter.finishWriting {
-                // videoWriter.error
                 completion(true)
             }
         } catch {
@@ -319,4 +421,3 @@ class ImageVideoCreator {
         }
     }
 }
-

@@ -13,6 +13,7 @@
 		F9025ECA226A7FD00052F0F9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F9025EC9226A7FD00052F0F9 /* Assets.xcassets */; };
 		F9025ECD226A7FD00052F0F9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F9025ECB226A7FD00052F0F9 /* LaunchScreen.storyboard */; };
 		F9939C7A226F9FB600B11157 /* AV.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9939C79226F9FB600B11157 /* AV.swift */; };
+		F9939C7C2270D2B400B11157 /* View+extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9939C7B2270D2B400B11157 /* View+extension.swift */; };
 		F9F311BA226A987B006DD3E1 /* SampleVideo_1280x720_1mb.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = F9F311B9226A987B006DD3E1 /* SampleVideo_1280x720_1mb.mp4 */; };
 /* End PBXBuildFile section */
 
@@ -25,6 +26,7 @@
 		F9025ECC226A7FD00052F0F9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F9025ECE226A7FD00052F0F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F9939C79226F9FB600B11157 /* AV.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AV.swift; sourceTree = "<group>"; };
+		F9939C7B2270D2B400B11157 /* View+extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+extension.swift"; sourceTree = "<group>"; };
 		F9F311B9226A987B006DD3E1 /* SampleVideo_1280x720_1mb.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = SampleVideo_1280x720_1mb.mp4; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -62,6 +64,7 @@
 				F9025EC2226A7FCD0052F0F9 /* AppDelegate.swift */,
 				F9025EC4226A7FCD0052F0F9 /* ViewController.swift */,
 				F9939C79226F9FB600B11157 /* AV.swift */,
+				F9939C7B2270D2B400B11157 /* View+extension.swift */,
 				F9025EC6226A7FCD0052F0F9 /* Main.storyboard */,
 				F9025EC9226A7FD00052F0F9 /* Assets.xcassets */,
 				F9025ECB226A7FD00052F0F9 /* LaunchScreen.storyboard */,
@@ -144,6 +147,7 @@
 			files = (
 				F9025EC5226A7FCD0052F0F9 /* ViewController.swift in Sources */,
 				F9939C7A226F9FB600B11157 /* AV.swift in Sources */,
+				F9939C7C2270D2B400B11157 /* View+extension.swift in Sources */,
 				F9025EC3226A7FCD0052F0F9 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
