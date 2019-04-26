@@ -38,6 +38,10 @@ class VideoComposer {
 
         // this determines the quality of the video
 //        videoSize = CGSize(width: view.frame.width * viewSizeMultiplier, height: view.frame.height * viewSizeMultiplier)
+
+        let t = view.transform
+        view.transform = .identity
+
         videoSize = CGSize(width: 1772.0, height: 3840.0)
         viewSizeMultiplier = 1772.0 / view.frame.width
 
@@ -66,6 +70,8 @@ class VideoComposer {
                 print("unhandled view type")
             }
         }
+
+        view.transform = t
     }
 
     func createVideo(completion: @escaping (AVAssetExportSession) -> Void) {
@@ -205,6 +211,7 @@ class VideoComposer {
             height: assetTrack.naturalSize.height / view.frame.height
         )
 
+//        let assetOrigin = CGPoint(x: view.center.x - view.frame.width) * 2.1, y: view.center.y * 3.67)
         let assetOrigin = CGPoint(
             x: view.frame.origin.x * ratioSize.width,
             y: view.frame.origin.y * ratioSize.height
@@ -217,22 +224,34 @@ class VideoComposer {
 
         print("New Frame: (\(assetOrigin.x), \(assetOrigin.y), \(assetTrack.naturalSize.width * assetSize.width), \(assetTrack.naturalSize.height * assetSize.height))\n")
 
-        let move = CGAffineTransform(
-            translationX: assetOrigin.x,
-            y: assetOrigin.y
-        )
-        let scale = CGAffineTransform(
-            scaleX: assetSize.width,
-            y: assetSize.height
-        )
+        // correct position:
+//        var transform = CGAffineTransform(scaleX: 1.15, y: 1.15)
+        var transform = CGAffineTransform(scaleX: assetSize.width, y: assetSize.height)
+//        transform = transform.translatedBy(x: assetOrigin.x, y: assetOrigin.y)
 
-        instruction.setTransform(move.concatenating(scale).concatenating(view.transform), at: .zero)
+
+//        var transform = CGAffineTransform(scaleX: assetSize.width, y: assetSize.height)
+//        var transform = CGAffineTransform(translationX: 1500, y: 1700)
+//        var transform = CGAffineTransform(translationX: assetOrigin.x, y: assetOrigin.y)
+//        var transform = CGAffineTransform(rotationAngle: 1.0)
+
+//        transform = transform.translatedBy(x: 500, y: 300)
+//        transform = transform.translatedBy(x: assetOrigin.x, y: assetOrigin.y)
+//        transform = transform.rotated(by: 1.0)
+//        transform = transform.scaledBy(x: assetSize.width, y: assetSize.height)
+
+
+//        transform = transform.rotated(by: atan2(view.transform.b, view.transform.a))
+//        transform = transform.scaledBy(x: assetSize.width, y: assetSize.height)
+
+        instruction.setTransform(transform, at: .zero) //move.concatenating(scale).concatenating(t)
     }
 }
 
 class ViewController: UIViewController {
 
     let videoView = UIView()
+    let imageView = UIImageView()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -242,13 +261,11 @@ class ViewController: UIViewController {
             return
         }
 
-        //(14 30; 347 752)
         view.addSubview(videoView)
-//        view.translatesAutoresizingMaskIntoConstraints = false
-        videoView.frame = CGRect(x: 14, y: 30, width: 347, height: 752)
+        videoView.frame = CGRect(x: 16, y: 32, width: 380, height: 750) //affects video sizing/positioning...
 
         let image = UIImage(named: "image")
-        let imageView = UIImageView(image: image)
+        imageView.image = image
         videoView.addSubview(imageView)
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 0).isActive = true
@@ -256,29 +273,40 @@ class ViewController: UIViewController {
         imageView.widthAnchor.constraint(equalToConstant: image!.size.width / 4).isActive = true
         imageView.heightAnchor.constraint(equalToConstant: image!.size.height / 4).isActive = true
 
+//        print(imageView.frame)
+//        var transform = CGAffineTransform(scaleX: 1.3, y: 1.3)
+//        var transform = CGAffineTransform(translationX: 150, y: 0)
+//        var transform = CGAffineTransform(rotationAngle: 1.0)
+
+//        transform = transform.scaledBy(x: 1.3, y: 1.3)
+//        transform = transform.rotated(by: 1.0)
+//        transform = transform.translatedBy(x: 150, y: 0)
 
 
-        let firstAsset = AVAsset(url: pathUrl)
-        let firstAvView = PlayerViewFactory.makePlayerView(with: firstAsset)
-        videoView.addSubview(firstAvView)
-        firstAvView.translatesAutoresizingMaskIntoConstraints = false
-        firstAvView.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 100).isActive = true
-        firstAvView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: 50).isActive = true
-        firstAvView.widthAnchor.constraint(equalToConstant: 1280.0 / 2).isActive = true
-        firstAvView.heightAnchor.constraint(equalToConstant: 720 / 2).isActive = true
+//        imageView.transform = transform
+//        print(imageView.frame)
+
+//        let firstAsset = AVAsset(url: pathUrl)
+//        let firstAvView = PlayerViewFactory.makePlayerView(with: firstAsset)
+//        videoView.addSubview(firstAvView)
+//        firstAvView.translatesAutoresizingMaskIntoConstraints = false
+//        firstAvView.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 500).isActive = true
+//        firstAvView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: 0).isActive = true
+//        firstAvView.widthAnchor.constraint(equalToConstant: 1280.0 / 2).isActive = true
+//        firstAvView.heightAnchor.constraint(equalToConstant: 720 / 2).isActive = true
 //        let firstRotate = CGAffineTransform(rotationAngle: -20)
 //        firstAvView.transform = firstRotate
-
-
-
-        let secondAsset = AVAsset(url: pathUrl)
-        let secondAvView = PlayerViewFactory.makePlayerView(with: secondAsset)
-        videoView.addSubview(secondAvView)
-        secondAvView.translatesAutoresizingMaskIntoConstraints = false
-        secondAvView.topAnchor.constraint(equalTo: videoView.topAnchor).isActive = true
-        secondAvView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: image!.size.width / 4).isActive = true
-        secondAvView.widthAnchor.constraint(equalToConstant: 1280.0 / 2).isActive = true
-        secondAvView.heightAnchor.constraint(equalToConstant: 720.0 / 2).isActive = true
+//        print("transform: \(firstAvView.transform)")
+//
+//
+//        let secondAsset = AVAsset(url: pathUrl)
+//        let secondAvView = PlayerViewFactory.makePlayerView(with: secondAsset)
+//        videoView.addSubview(secondAvView)
+//        secondAvView.translatesAutoresizingMaskIntoConstraints = false
+//        secondAvView.topAnchor.constraint(equalTo: videoView.topAnchor).isActive = true
+//        secondAvView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: image!.size.width / 4).isActive = true
+//        secondAvView.widthAnchor.constraint(equalToConstant: 1280.0 / 2).isActive = true
+//        secondAvView.heightAnchor.constraint(equalToConstant: 720.0 / 2).isActive = true
 //        let secondRotate = CGAffineTransform(rotationAngle: 50)
 //        secondAvView.transform = secondRotate
 
@@ -301,10 +329,11 @@ class ViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        composer = VideoComposer(view: videoView)
-
-        composer?.createVideo() { exporter in
-            self.didFinish(session: exporter)
+        DispatchQueue.main.async {
+            self.composer = VideoComposer(view: self.videoView)
+            self.composer?.createVideo() { exporter in
+                self.didFinish(session: exporter)
+            }
         }
     }
 
@@ -313,7 +342,7 @@ class ViewController: UIViewController {
             assertionFailure()
             return
         }
-        self.saveVideo(videoUrl: url)
+        self.showVideo(videoUrl: url)
     }
 
     let player = AVPlayerViewController()
