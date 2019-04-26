@@ -14,6 +14,7 @@
 		F9025ECD226A7FD00052F0F9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F9025ECB226A7FD00052F0F9 /* LaunchScreen.storyboard */; };
 		F9939C7A226F9FB600B11157 /* AV.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9939C79226F9FB600B11157 /* AV.swift */; };
 		F9939C7C2270D2B400B11157 /* View+extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9939C7B2270D2B400B11157 /* View+extension.swift */; };
+		F9939C7E2273B0A100B11157 /* ImageVideoCreator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9939C7D2273B0A100B11157 /* ImageVideoCreator.swift */; };
 		F9F311BA226A987B006DD3E1 /* SampleVideo_1280x720_1mb.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = F9F311B9226A987B006DD3E1 /* SampleVideo_1280x720_1mb.mp4 */; };
 /* End PBXBuildFile section */
 
@@ -27,6 +28,7 @@
 		F9025ECE226A7FD00052F0F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F9939C79226F9FB600B11157 /* AV.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AV.swift; sourceTree = "<group>"; };
 		F9939C7B2270D2B400B11157 /* View+extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+extension.swift"; sourceTree = "<group>"; };
+		F9939C7D2273B0A100B11157 /* ImageVideoCreator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ImageVideoCreator.swift; path = VideoMerger/ImageVideoCreator.swift; sourceTree = "<group>"; };
 		F9F311B9226A987B006DD3E1 /* SampleVideo_1280x720_1mb.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = SampleVideo_1280x720_1mb.mp4; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -44,6 +46,7 @@
 		F9025EB6226A7FCD0052F0F9 = {
 			isa = PBXGroup;
 			children = (
+				F9939C7D2273B0A100B11157 /* ImageVideoCreator.swift */,
 				F9025EC1226A7FCD0052F0F9 /* VideoMerger */,
 				F9025EC0226A7FCD0052F0F9 /* Products */,
 			);
@@ -149,6 +152,7 @@
 				F9939C7A226F9FB600B11157 /* AV.swift in Sources */,
 				F9939C7C2270D2B400B11157 /* View+extension.swift in Sources */,
 				F9025EC3226A7FCD0052F0F9 /* AppDelegate.swift in Sources */,
+				F9939C7E2273B0A100B11157 /* ImageVideoCreator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
