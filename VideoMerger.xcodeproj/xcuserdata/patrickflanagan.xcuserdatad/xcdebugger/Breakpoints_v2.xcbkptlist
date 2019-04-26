@@ -10,12 +10,60 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "VideoMerger/ViewController.swift"
-            timestampString = "578007275.901539"
+            timestampString = "578014117.042254"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "228"
-            endingLineNumber = "228"
-            landmarkName = "setTransform(on:of:andOf:)"
+            startingLineNumber = "90"
+            endingLineNumber = "90"
+            landmarkName = "export(videoComposition:completion:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 () -&gt; () in VideoMerger.VideoComposer.(export in _D004A5D1A87D88291A0247D81D113CC4)(videoComposition: __C.AVMutableVideoComposition, completion: (__C.AVAssetExportSession) -&gt; ()) -&gt; ()"
+                  moduleName = "VideoMerger"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/patrickflanagan/Desktop/VideoMerger/VideoMerger/ViewController.swift"
+                  timestampString = "578013902.545501"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "90"
+                  endingLineNumber = "90"
+                  offsetFromSymbolStart = "167">
+               </Location>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 () -&gt; () in closure #1 () -&gt; () in VideoMerger.VideoComposer.(export in _D004A5D1A87D88291A0247D81D113CC4)(videoComposition: __C.AVMutableVideoComposition, completion: (__C.AVAssetExportSession) -&gt; ()) -&gt; ()"
+                  moduleName = "VideoMerger"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/patrickflanagan/Desktop/VideoMerger/VideoMerger/ViewController.swift"
+                  timestampString = "578013902.549247"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "91"
+                  endingLineNumber = "91"
+                  offsetFromSymbolStart = "37">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "VideoMerger/ViewController.swift"
+            timestampString = "578014117.0431499"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "91"
+            endingLineNumber = "91"
+            landmarkName = "export(videoComposition:completion:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
