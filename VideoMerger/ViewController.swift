@@ -227,7 +227,7 @@ class VideoComposer {
         // correct position:
 //        var transform = CGAffineTransform(scaleX: 1.15, y: 1.15)
         var transform = CGAffineTransform(scaleX: assetSize.width, y: assetSize.height)
-//        transform = transform.translatedBy(x: assetOrigin.x, y: assetOrigin.y)
+        transform = transform.translatedBy(x: assetOrigin.x, y: assetOrigin.y)
 
 
 //        var transform = CGAffineTransform(scaleX: assetSize.width, y: assetSize.height)
@@ -262,16 +262,16 @@ class ViewController: UIViewController {
         }
 
         view.addSubview(videoView)
-        videoView.frame = CGRect(x: 16, y: 32, width: 380, height: 750) //affects video sizing/positioning...
+        videoView.frame = CGRect(x: 16, y: 32, width: 380, height: 748) //affects video sizing/positioning...
 
         let image = UIImage(named: "image")
         imageView.image = image
         videoView.addSubview(imageView)
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 0).isActive = true
-        imageView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: 0).isActive = true
-        imageView.widthAnchor.constraint(equalToConstant: image!.size.width / 4).isActive = true
-        imageView.heightAnchor.constraint(equalToConstant: image!.size.height / 4).isActive = true
+        imageView.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 500).isActive = true
+        imageView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: 200).isActive = true
+        imageView.widthAnchor.constraint(equalToConstant: image!.size.width / 3).isActive = true
+        imageView.heightAnchor.constraint(equalToConstant: image!.size.height / 3).isActive = true
 
 //        print(imageView.frame)
 //        var transform = CGAffineTransform(scaleX: 1.3, y: 1.3)
