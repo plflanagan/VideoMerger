@@ -12,6 +12,7 @@
 		F9025EC8226A7FCD0052F0F9 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F9025EC6226A7FCD0052F0F9 /* Main.storyboard */; };
 		F9025ECA226A7FD00052F0F9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F9025EC9226A7FD00052F0F9 /* Assets.xcassets */; };
 		F9025ECD226A7FD00052F0F9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F9025ECB226A7FD00052F0F9 /* LaunchScreen.storyboard */; };
+		F95BB7B52277BF530009E1AF /* Frame-2.png in Resources */ = {isa = PBXBuildFile; fileRef = F95BB7B42277BF520009E1AF /* Frame-2.png */; };
 		F9939C7A226F9FB600B11157 /* AV.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9939C79226F9FB600B11157 /* AV.swift */; };
 		F9939C7C2270D2B400B11157 /* View+extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9939C7B2270D2B400B11157 /* View+extension.swift */; };
 		F9939C7E2273B0A100B11157 /* ImageVideoCreator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9939C7D2273B0A100B11157 /* ImageVideoCreator.swift */; };
@@ -26,6 +27,7 @@
 		F9025EC9226A7FD00052F0F9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F9025ECC226A7FD00052F0F9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F9025ECE226A7FD00052F0F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F95BB7B42277BF520009E1AF /* Frame-2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Frame-2.png"; sourceTree = "<group>"; };
 		F9939C79226F9FB600B11157 /* AV.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AV.swift; sourceTree = "<group>"; };
 		F9939C7B2270D2B400B11157 /* View+extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+extension.swift"; sourceTree = "<group>"; };
 		F9939C7D2273B0A100B11157 /* ImageVideoCreator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ImageVideoCreator.swift; path = VideoMerger/ImageVideoCreator.swift; sourceTree = "<group>"; };
@@ -63,6 +65,7 @@
 		F9025EC1226A7FCD0052F0F9 /* VideoMerger */ = {
 			isa = PBXGroup;
 			children = (
+				F95BB7B42277BF520009E1AF /* Frame-2.png */,
 				F9F311B9226A987B006DD3E1 /* SampleVideo_1280x720_1mb.mp4 */,
 				F9025EC2226A7FCD0052F0F9 /* AppDelegate.swift */,
 				F9025EC4226A7FCD0052F0F9 /* ViewController.swift */,
@@ -138,6 +141,7 @@
 				F9025ECD226A7FD00052F0F9 /* LaunchScreen.storyboard in Resources */,
 				F9025ECA226A7FD00052F0F9 /* Assets.xcassets in Resources */,
 				F9025EC8226A7FCD0052F0F9 /* Main.storyboard in Resources */,
+				F95BB7B52277BF530009E1AF /* Frame-2.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -63,6 +63,29 @@ class VideoComposer {
         videoComposition.frameDuration = CMTimeMake(value: 1, timescale: 60)
         videoComposition.renderSize = videoSize
 
+        let frame = CGRect(x: 0, y: 0, width: videoSize.width, height: videoSize.height)
+
+        let imageLayer = CALayer()
+        let image = UIImage(named: "Frame-2.png")!.cgImage!
+        imageLayer.contents = image
+        imageLayer.frame = frame
+//        imageLayer.masksToBounds = true
+
+        let parentLayer = CALayer()
+        parentLayer.frame = frame
+
+        let videoLayer = CALayer()
+        videoLayer.frame = frame
+
+        parentLayer.addSublayer(videoLayer)
+        parentLayer.addSublayer(imageLayer)
+
+        let otherLayer = CALayer()
+        otherLayer.frame = frame
+
+        videoComposition.animationTool = AVVideoCompositionCoreAnimationTool(postProcessingAsVideoLayer: videoLayer, in: parentLayer)
+
+
         export(videoComposition: videoComposition) { (session) in
             completion(session)
         }
@@ -120,7 +143,7 @@ class VideoComposer {
 
         let movieLength = TimeInterval(duration.seconds)
 
-        let url = filePath().appendingPathComponent("output4.mov")
+        let url = filePath().appendingPathComponent("image.description.mov")
 
         ImageVideoCreator.writeSingleImageToMovie(image: image, movieLength: movieLength, outputFileURL: url) { [weak self] success in
 
@@ -256,17 +279,26 @@ class ViewController: UIViewController {
         firstAvView.transform = firstRotate
 
 
-        let secondAsset = AVAsset(url: pathUrl)
-        let secondAvView = PlayerViewFactory.makePlayerView(with: secondAsset)
-        videoView.addSubview(secondAvView)
-        secondAvView.translatesAutoresizingMaskIntoConstraints = false
-        secondAvView.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 200).isActive = true
-        secondAvView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: image!.size.width / -3).isActive = true
-        secondAvView.widthAnchor.constraint(equalToConstant: 1280.0 / 2).isActive = true
-        secondAvView.heightAnchor.constraint(equalToConstant: 720.0 / 2).isActive = true
+//        let secondAsset = AVAsset(url: pathUrl)
+//        let secondAvView = PlayerViewFactory.makePlayerView(with: secondAsset)
+//        videoView.addSubview(secondAvView)
+//        secondAvView.translatesAutoresizingMaskIntoConstraints = false
+//        secondAvView.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 200).isActive = true
+//        secondAvView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: image!.size.width / -3).isActive = true
+//        secondAvView.widthAnchor.constraint(equalToConstant: 1280.0 / 2).isActive = true
+//        secondAvView.heightAnchor.constraint(equalToConstant: 720.0 / 2).isActive = true
 //        let secondRotate = CGAffineTransform(rotationAngle: 50)
 //        secondAvView.transform = secondRotate
 
+
+//        let otherImage = UIImage(named: "Frame-2.png")
+//        let imageView2 = UIImageView(image: otherImage)
+//        videoView.addSubview(imageView2)
+//        imageView2.translatesAutoresizingMaskIntoConstraints = false
+//        imageView2.topAnchor.constraint(equalTo: videoView.topAnchor).isActive = true
+//        imageView2.leadingAnchor.constraint(equalTo: videoView.leadingAnchor).isActive = true
+//        imageView2.widthAnchor.constraint(equalToConstant: videoView.frame.width).isActive = true
+//        imageView2.heightAnchor.constraint(equalToConstant: videoView.frame.height).isActive = true
 
 
 //        let thirdAsset = AVAsset(url: pathUrl)
