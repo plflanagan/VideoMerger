@@ -34,23 +34,27 @@ class VideoComposer {
 
         var minDuration: CMTime = CMTime(seconds: 15, preferredTimescale: 600)
         view.subviews.forEach { subview in
-            if let avView = subview as? AVPlayerView, let duration = avView.videoPlayer.currentItem?.duration {
-                minDuration = min(minDuration, duration)
-            }
+            subview.subviews.forEach({ subSubview in
+                if let avView = subSubview as? AVPlayerView, let duration = avView.videoPlayer.currentItem?.duration {
+                    minDuration = min(minDuration, duration)
+                }
+            })
         }
         self.duration = minDuration
         mainInstruction.timeRange = CMTimeRangeMake(start: .zero, duration: minDuration)
 
-        view.subviews.reversed().forEach { subview in
-            if let avView = subview as? AVPlayerView {
-                addVideo(of: avView)
+        view.subviews.forEach { subview in
+            subview.subviews.reversed().forEach { subSubview in
+                if let avView = subSubview as? AVPlayerView {
+                    addVideo(of: avView)
 
-            }
-            else if let imageView = subview as? UIImageView {
-                addImage(of: imageView)
-            }
-            else {
-                print("unhandled view type")
+                }
+                else if let imageView = subSubview as? UIImageView {
+                    addImage(of: imageView)
+                }
+                else {
+                    print("unhandled view type")
+                }
             }
         }
     }
@@ -200,14 +204,9 @@ class VideoComposer {
 
     private func setTransform(on instruction: AVMutableVideoCompositionLayerInstruction, of view: UIView, andOf assetTrack: AVAssetTrack) {
 
-        let parentSize = CGSize(
-            width: videoSize.width / viewSizeMultiplier,
-            height: videoSize.height / viewSizeMultiplier
-        )
-
-        let assetSize = CGSize(
-            width: view.originalFrame.width * viewSizeMultiplier / assetTrack.naturalSize.width,
-            height: view.originalFrame.height * viewSizeMultiplier / assetTrack.naturalSize.height
+        let assetScaler = CGPoint(
+            x: view.originalFrame.width * viewSizeMultiplier / assetTrack.naturalSize.width,
+            y: view.originalFrame.height * viewSizeMultiplier / assetTrack.naturalSize.height
         )
 
         let ratioSize = CGSize(
@@ -215,27 +214,28 @@ class VideoComposer {
             height: assetTrack.naturalSize.height / view.originalFrame.height
         )
 
+        let topLeftPoint: CGPoint
+        if let parentView = view.superview {
+            topLeftPoint = parentView.convert(view.newTopLeft, to: nil)
+        }
+        else {
+            topLeftPoint = CGPoint(x: view.newTopLeft.x, y: view.newTopLeft.y)
+        }
         let assetOrigin = CGPoint(
-            x: view.newTopLeft.x * ratioSize.width * assetSize.width,
-            y: view.newTopLeft.y * ratioSize.height * assetSize.height
-        )
-
-        let centerOffsetForRotation = CGPoint(
-            x: (assetTrack.naturalSize.width * assetSize.width - assetTrack.naturalSize.width) / 2,
-            y: (assetTrack.naturalSize.height * assetSize.height - assetTrack.naturalSize.height) / 2
+            x: topLeftPoint.x * ratioSize.width * assetScaler.x,
+            y: topLeftPoint.y * ratioSize.height * assetScaler.y
         )
 
         print("view.frame: \(view.originalFrame)")
         print("natural: \(assetTrack.naturalSize)")
         print("assetOrigin: \(assetOrigin)")
-        print("assetSize: \(assetSize)")
-        print("offset \(centerOffsetForRotation)")
-        print("New Frame: (\(assetOrigin.x), \(assetOrigin.y), \(assetTrack.naturalSize.width * assetSize.width), \(assetTrack.naturalSize.height * assetSize.height))\n")
+        print("assetSize: \(assetScaler)")
+        print("New Frame: (\(assetOrigin.x), \(assetOrigin.y), \(assetTrack.naturalSize.width * assetScaler.x), \(assetTrack.naturalSize.height * assetScaler.y))\n")
 
         var transform = CGAffineTransform(translationX: assetOrigin.x, y: assetOrigin.y)
 
         transform = transform.rotated(by: atan2(view.transform.b, view.transform.a))
-        transform = transform.scaledBy(x: assetSize.width, y: assetSize.height)
+        transform = transform.scaledBy(x: assetScaler.x, y: assetScaler.y)
 
         instruction.setTransform(transform, at: .zero)
     }
@@ -257,24 +257,48 @@ class ViewController: UIViewController {
         view.addSubview(videoView)
         videoView.frame = CGRect(x: 16, y: 32, width: 380, height: 748) //affects video sizing/positioning...
 
+
+        let firstArea = UIView()
+        firstArea.backgroundColor = .red
+        firstArea.layer.masksToBounds = true
+        videoView.addSubview(firstArea)
+        firstArea.translatesAutoresizingMaskIntoConstraints = false
+        firstArea.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 40).isActive = true
+        firstArea.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: 30).isActive = true
+        firstArea.widthAnchor.constraint(equalToConstant: videoView.frame.width / 4 * 3).isActive = true
+        firstArea.heightAnchor.constraint(equalToConstant: videoView.frame.width / 4 * 3).isActive = true
+
+        let secondArea = UIView()
+        secondArea.backgroundColor = .orange
+        secondArea.layer.masksToBounds = true
+        videoView.addSubview(secondArea)
+        secondArea.translatesAutoresizingMaskIntoConstraints = false
+        secondArea.topAnchor.constraint(equalTo: firstArea.bottomAnchor, constant: 100).isActive = true
+        secondArea.leadingAnchor.constraint(equalTo: firstArea.leadingAnchor).isActive = true
+        secondArea.widthAnchor.constraint(equalTo: firstArea.widthAnchor).isActive = true
+        secondArea.heightAnchor.constraint(equalTo: firstArea.widthAnchor).isActive = true
+
+
         let image = UIImage(named: "image")
         imageView.image = image
-        videoView.addSubview(imageView)
+        imageView.layer.masksToBounds = true
+        firstArea.addSubview(imageView)
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 0).isActive = true
-        imageView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: 0).isActive = true
+        imageView.topAnchor.constraint(equalTo: firstArea.topAnchor, constant: 10).isActive = true
+        imageView.leadingAnchor.constraint(equalTo: firstArea.leadingAnchor, constant: 10).isActive = true
         imageView.widthAnchor.constraint(equalToConstant: image!.size.width / 3).isActive = true
         imageView.heightAnchor.constraint(equalToConstant: image!.size.height / 3).isActive = true
 
 
         let firstAsset = AVAsset(url: pathUrl)
         let firstAvView = PlayerViewFactory.makePlayerView(with: firstAsset)
-        videoView.addSubview(firstAvView)
+        firstAvView.layer.masksToBounds = true
+        secondArea.addSubview(firstAvView)
         firstAvView.translatesAutoresizingMaskIntoConstraints = false
-        firstAvView.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 500).isActive = true
-        firstAvView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: 0).isActive = true
-        firstAvView.widthAnchor.constraint(equalToConstant: 1280.0 / 2).isActive = true
-        firstAvView.heightAnchor.constraint(equalToConstant: 720 / 2).isActive = true
+        firstAvView.topAnchor.constraint(equalTo: secondArea.topAnchor, constant: 0).isActive = true
+        firstAvView.leadingAnchor.constraint(equalTo: secondArea.leadingAnchor, constant: 0).isActive = true
+        firstAvView.widthAnchor.constraint(equalToConstant: 1280.0 / 4).isActive = true
+        firstAvView.heightAnchor.constraint(equalToConstant: 720 / 4).isActive = true
         let firstRotate = CGAffineTransform(rotationAngle: -20)
         firstAvView.transform = firstRotate
 
@@ -282,6 +306,7 @@ class ViewController: UIViewController {
 //        let secondAsset = AVAsset(url: pathUrl)
 //        let secondAvView = PlayerViewFactory.makePlayerView(with: secondAsset)
 //        videoView.addSubview(secondAvView)
+//        videoView.sendSubviewToBack(secondA)
 //        secondAvView.translatesAutoresizingMaskIntoConstraints = false
 //        secondAvView.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 200).isActive = true
 //        secondAvView.leadingAnchor.constraint(equalTo: videoView.leadingAnchor, constant: image!.size.width / -3).isActive = true
@@ -289,7 +314,8 @@ class ViewController: UIViewController {
 //        secondAvView.heightAnchor.constraint(equalToConstant: 720.0 / 2).isActive = true
 //        let secondRotate = CGAffineTransform(rotationAngle: 50)
 //        secondAvView.transform = secondRotate
-
+//
+//        let videoViewImage = videoView.asImage()
 
 //        let otherImage = UIImage(named: "Frame-2.png")
 //        let imageView2 = UIImageView(image: otherImage)
