@@ -22,6 +22,24 @@ extension UIImage {
         }
         self.init(cgImage: cgImage)
     }
+
+    func imageByMakingWhiteBackgroundTransparent() -> UIImage? {
+
+        let image = UIImage(data: self.jpegData(compressionQuality: 1.0)!)!
+        let rawImageRef: CGImage = image.cgImage!
+
+        let colorMasking: [CGFloat] = [222, 255, 222, 255, 222, 255]
+        UIGraphicsBeginImageContextWithOptions(image.size, false, 1.0)
+
+        let maskedImageRef = rawImageRef.copy(maskingColorComponents: colorMasking)
+        UIGraphicsGetCurrentContext()?.translateBy(x: 0.0,y: image.size.height)
+        UIGraphicsGetCurrentContext()?.scaleBy(x: 1.0, y: -1.0)
+        UIGraphicsGetCurrentContext()?.draw(maskedImageRef!, in: CGRect.init(x: 0, y: 0, width: image.size.width, height: image.size.height))
+        let result = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        return result
+
+    }
 }
 
 extension UIView {
@@ -38,8 +56,8 @@ extension UIView {
             width: (self.bounds.size.width * ratio).rounded(),
             height: (self.bounds.size.height * ratio).rounded()
         )
-
-        UIGraphicsBeginImageContextWithOptions(convertedRect.size, self.isOpaque, 0.0)
+        UIGraphicsBeginImageContextWithOptions(convertedRect.size, false, 1.0)
+//        UIGraphicsBeginImageContextWithOptions(convertedRect.size, self.isOpaque, 0.0)
 
         self.drawHierarchy(in: convertedRect, afterScreenUpdates: true)
         let image = UIGraphicsGetImageFromCurrentImageContext()
@@ -62,4 +80,5 @@ extension UIView {
             self.layer.shadowPath = UIBezierPath(rect: rect).cgPath
         }
     }
+
 }

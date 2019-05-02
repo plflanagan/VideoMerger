@@ -56,11 +56,11 @@ class ImageVideoCreator {
 
     static func writeSingleImageToMovie(image: UIImage, movieLength: TimeInterval, outputFileURL: URL, completion: @escaping (Bool) -> ()) {
 
-        //        let fileManager = FileManager.default
-        //
-        //        if fileManager.fileExists(atPath: outputFileURL.path) {
-        //            try! fileManager.removeItem(at: outputFileURL)
-        //        }
+//        let fileManager = FileManager.default
+//
+//        if fileManager.fileExists(atPath: outputFileURL.path) {
+//            try! fileManager.removeItem(at: outputFileURL)
+//        }
 
         do {
             let imageSize = image.size

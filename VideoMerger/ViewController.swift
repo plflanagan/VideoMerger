@@ -11,240 +11,15 @@ import AVFoundation
 import AVKit
 import Photos
 
-class VideoComposer {
-    let composition = AVMutableComposition()
-    let mainInstruction = AVMutableVideoCompositionInstruction()
-    let duration: CMTime
-    let videoSize: CGSize
-
-    // use this to increase the quality of the video
-    var viewSizeMultiplier: CGFloat = 5.0
-
-    init(view: UIView) {
-
-        // this determines the quality of the video
-//        videoSize = CGSize(width: view.frame.width * viewSizeMultiplier, height: view.frame.height * viewSizeMultiplier)
-
-        videoSize = CGSize(width: 1772.0, height: 3840.0)
-        viewSizeMultiplier = 1772.0 / view.frame.width
-
-        print("view: \(videoSize.width / viewSizeMultiplier) - \(videoSize.height / viewSizeMultiplier)")
-        print("video: \(videoSize)")
-        print("multiplier: \(viewSizeMultiplier)\n")
-
-        var minDuration: CMTime = CMTime(seconds: 15, preferredTimescale: 600)
-        view.subviews.forEach { subview in
-            subview.subviews.forEach({ subSubview in
-                if let avView = subSubview as? AVPlayerView, let duration = avView.videoPlayer.currentItem?.duration {
-                    minDuration = min(minDuration, duration)
-                }
-            })
-        }
-        self.duration = minDuration
-        mainInstruction.timeRange = CMTimeRangeMake(start: .zero, duration: minDuration)
-
-        view.subviews.forEach { subview in
-            subview.subviews.reversed().forEach { subSubview in
-                if let avView = subSubview as? AVPlayerView {
-                    addVideo(of: avView)
-
-                }
-                else if let imageView = subSubview as? UIImageView {
-                    addImage(of: imageView)
-                }
-                else {
-                    print("unhandled view type")
-                }
-            }
-        }
-    }
-
-    func createVideo(completion: @escaping (AVAssetExportSession) -> Void) {
-
-        // make video composition
-        let videoComposition = AVMutableVideoComposition()
-        videoComposition.instructions = [mainInstruction]
-        videoComposition.frameDuration = CMTimeMake(value: 1, timescale: 60)
-        videoComposition.renderSize = videoSize
-
-        let frame = CGRect(x: 0, y: 0, width: videoSize.width, height: videoSize.height)
-
-        let imageLayer = CALayer()
-        let image = UIImage(named: "Frame-2.png")!.cgImage!
-        imageLayer.contents = image
-        imageLayer.frame = frame
-//        imageLayer.masksToBounds = true
-
-        let parentLayer = CALayer()
-        parentLayer.frame = frame
-
-        let videoLayer = CALayer()
-        videoLayer.frame = frame
-
-        parentLayer.addSublayer(videoLayer)
-        parentLayer.addSublayer(imageLayer)
-
-        let otherLayer = CALayer()
-        otherLayer.frame = frame
-
-        videoComposition.animationTool = AVVideoCompositionCoreAnimationTool(postProcessingAsVideoLayer: videoLayer, in: parentLayer)
-
-
-        export(videoComposition: videoComposition) { (session) in
-            completion(session)
-        }
-    }
-
-    private func export(videoComposition: AVMutableVideoComposition, completion: @escaping (AVAssetExportSession) -> Void) {
-        // export
-        let url = filePath().appendingPathComponent("output.mov")
-
-        let fileManager = FileManager.default
-
-        if fileManager.fileExists(atPath: url.path) {
-            try! fileManager.removeItem(at: url)
-        }
-
-        guard let exporter = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality) else {
-            assertionFailure()
-            return
-        }
-        exporter.videoComposition = videoComposition
-        exporter.outputFileType = .mov
-        exporter.outputURL = url
-
-        exporter.exportAsynchronously {
-            DispatchQueue.main.async {
-                completion(exporter)
-            }
-        }
-    }
-
-    private func addVideo(of avView: AVPlayerView) {
-        guard
-            let track = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid),
-            let asset = avView.videoPlayer.currentItem?.asset,
-            let videoTrack = asset.tracks(withMediaType: .video).first
-            else {
-                assertionFailure()
-                return
-        }
-        try! track.insertTimeRange(CMTimeRangeMake(start: .zero, duration: asset.duration), of: videoTrack, at: .zero)
-
-        // add layer instruction for first video
-        let videoLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
-        print("video")
-        setTransform(on: videoLayerInstruction, of: avView, andOf: videoTrack)
-
-        mainInstruction.layerInstructions.append(videoLayerInstruction)
-    }
-
-    private func addImage(of imageView: UIImageView) {
-        guard let image = imageView.image else {
-            assertionFailure("no image")
-            return
-        }
-
-        let movieLength = TimeInterval(duration.seconds)
-
-        let url = filePath().appendingPathComponent("image.description.mov")
-
-        ImageVideoCreator.writeSingleImageToMovie(image: image, movieLength: movieLength, outputFileURL: url) { [weak self] success in
-
-            guard let `self` = self else {
-                return
-            }
-
-            // TODO: This likely won't capture the video properly when file is created for first time.
-            let imageAsset = AVAsset(url: url)
-
-            let keys = ["playable", "readable", "composable", "tracks", "exportable"]
-            var error: NSError? = nil
-
-//            imageAsset.loadValuesAsynchronously(forKeys: keys, completionHandler: {
-//                DispatchQueue.main.async {
-//                    keys.forEach({ key in
-//                        let status = imageAsset.statusOfValue(forKey: key, error: &error)
-//                        switch status {
-//                        case .loaded:
-//                            print("loaded. \(error)")
-//                        case .loading:
-//                            print("loading. \(error)")
-//                        case .failed:
-//                            print("failed. \(error)")
-//                        case .cancelled:
-//                            print("cancelled. \(error)")
-//                        case .unknown:
-//                            print("unknown. \(error)")
-//                        }
-//                    })
-
-                    guard
-                        let imageTrack = self.composition.addMutableTrack(
-                            withMediaType: .video,
-                            preferredTrackID: kCMPersistentTrackID_Invalid),
-                        let imageVideoTrack = imageAsset.tracks(withMediaType: .video).first
-                        else {
-                            assertionFailure()
-                            return
-                    }
-
-                    try! imageTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: self.duration), of: imageVideoTrack, at: .zero)
-
-                    let imageVideoLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: imageTrack)
-
-                    print("image")
-
-                    self.setTransform(on: imageVideoLayerInstruction, of: imageView, andOf: imageVideoTrack)
-                    self.mainInstruction.layerInstructions.append(imageVideoLayerInstruction)
-                }
-//            })
-//        }
-    }
-
-    private func setTransform(on instruction: AVMutableVideoCompositionLayerInstruction, of view: UIView, andOf assetTrack: AVAssetTrack) {
-
-        let assetScaler = CGPoint(
-            x: view.originalFrame.width * viewSizeMultiplier / assetTrack.naturalSize.width,
-            y: view.originalFrame.height * viewSizeMultiplier / assetTrack.naturalSize.height
-        )
-
-        let ratioSize = CGSize(
-            width: assetTrack.naturalSize.width / view.originalFrame.width,
-            height: assetTrack.naturalSize.height / view.originalFrame.height
-        )
-
-        let topLeftPoint: CGPoint
-        if let parentView = view.superview {
-            topLeftPoint = parentView.convert(view.newTopLeft, to: nil)
-        }
-        else {
-            topLeftPoint = CGPoint(x: view.newTopLeft.x, y: view.newTopLeft.y)
-        }
-        let assetOrigin = CGPoint(
-            x: topLeftPoint.x * ratioSize.width * assetScaler.x,
-            y: topLeftPoint.y * ratioSize.height * assetScaler.y
-        )
-
-        print("view.frame: \(view.originalFrame)")
-        print("natural: \(assetTrack.naturalSize)")
-        print("assetOrigin: \(assetOrigin)")
-        print("assetSize: \(assetScaler)")
-        print("New Frame: (\(assetOrigin.x), \(assetOrigin.y), \(assetTrack.naturalSize.width * assetScaler.x), \(assetTrack.naturalSize.height * assetScaler.y))\n")
-
-        var transform = CGAffineTransform(translationX: assetOrigin.x, y: assetOrigin.y)
-
-        transform = transform.rotated(by: atan2(view.transform.b, view.transform.a))
-        transform = transform.scaledBy(x: assetScaler.x, y: assetScaler.y)
-
-        instruction.setTransform(transform, at: .zero)
-    }
-}
-
 class ViewController: UIViewController {
 
     let videoView = UIView()
     let imageView = UIImageView()
+    var firstAvView: AVPlayerView?
+    var composer: VideoComposer?
+    let firstArea = UIView()
+    let secondArea = UIView()
+
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -254,11 +29,10 @@ class ViewController: UIViewController {
             return
         }
 
-        view.addSubview(videoView)
-        videoView.frame = CGRect(x: 16, y: 32, width: 380, height: 748) //affects video sizing/positioning...
+        view.addSubview(videoView) // (14 30; 347 752)
+        videoView.frame = CGRect(x: 16, y: 32, width: 380, height: 748)//CGRect(x: 16, y: 32, width: 380, height: 748) // 380 748 //affects video sizing/positioning...
+        videoView.backgroundColor = .white
 
-
-        let firstArea = UIView()
         firstArea.backgroundColor = .red
         firstArea.layer.masksToBounds = true
         videoView.addSubview(firstArea)
@@ -268,7 +42,6 @@ class ViewController: UIViewController {
         firstArea.widthAnchor.constraint(equalToConstant: videoView.frame.width / 4 * 3).isActive = true
         firstArea.heightAnchor.constraint(equalToConstant: videoView.frame.width / 4 * 3).isActive = true
 
-        let secondArea = UIView()
         secondArea.backgroundColor = .orange
         secondArea.layer.masksToBounds = true
         videoView.addSubview(secondArea)
@@ -291,17 +64,19 @@ class ViewController: UIViewController {
 
 
         let firstAsset = AVAsset(url: pathUrl)
-        let firstAvView = PlayerViewFactory.makePlayerView(with: firstAsset)
+        firstAvView = PlayerViewFactory.makePlayerView(with: firstAsset)
+        guard let firstAvView = firstAvView else {
+            return
+        }
         firstAvView.layer.masksToBounds = true
         secondArea.addSubview(firstAvView)
         firstAvView.translatesAutoresizingMaskIntoConstraints = false
-        firstAvView.topAnchor.constraint(equalTo: secondArea.topAnchor, constant: 0).isActive = true
-        firstAvView.leadingAnchor.constraint(equalTo: secondArea.leadingAnchor, constant: 0).isActive = true
-        firstAvView.widthAnchor.constraint(equalToConstant: 1280.0 / 4).isActive = true
-        firstAvView.heightAnchor.constraint(equalToConstant: 720 / 4).isActive = true
+        firstAvView.topAnchor.constraint(equalTo: secondArea.topAnchor, constant: -100).isActive = true
+        firstAvView.leadingAnchor.constraint(equalTo: secondArea.leadingAnchor, constant: -100).isActive = true
+        firstAvView.widthAnchor.constraint(equalToConstant: 1280.0 / 3).isActive = true
+        firstAvView.heightAnchor.constraint(equalToConstant: 720 / 3).isActive = true
         let firstRotate = CGAffineTransform(rotationAngle: -20)
         firstAvView.transform = firstRotate
-
 
 //        let secondAsset = AVAsset(url: pathUrl)
 //        let secondAvView = PlayerViewFactory.makePlayerView(with: secondAsset)
@@ -339,14 +114,13 @@ class ViewController: UIViewController {
 //        thirdAvView.transform = thirdRotate
     }
 
-    var composer: VideoComposer?
-
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+
 
         DispatchQueue.main.async {
             self.composer = VideoComposer(view: self.videoView)
@@ -382,59 +156,5 @@ class ViewController: UIViewController {
             PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: videoUrl)
             print("exported")
         })
-    }
-}
-
-extension UIView {
-    /// Helper to get pre transform frame
-    var originalFrame: CGRect {
-        let currentTransform = transform
-        transform = .identity
-        let originalFrame = frame
-        transform = currentTransform
-        return originalFrame
-    }
-
-    /// Helper to get point offset from center
-    func centerOffset(_ point: CGPoint) -> CGPoint {
-        return CGPoint(x: point.x - center.x, y: point.y - center.y)
-    }
-
-    /// Helper to get point back relative to center
-    func pointRelativeToCenter(_ point: CGPoint) -> CGPoint {
-        return CGPoint(x: point.x + center.x, y: point.y + center.y)
-    }
-
-    /// Helper to get point relative to transformed coords
-    func newPointInView(_ point: CGPoint) -> CGPoint {
-        // get offset from center
-        let offset = centerOffset(point)
-        // get transformed point
-        let transformedPoint = offset.applying(transform)
-        // make relative to center
-        return pointRelativeToCenter(transformedPoint)
-    }
-
-    var newTopLeft: CGPoint {
-        return newPointInView(originalFrame.origin)
-    }
-
-    var newTopRight: CGPoint {
-        var point = originalFrame.origin
-        point.x += originalFrame.width
-        return newPointInView(point)
-    }
-
-    var newBottomLeft: CGPoint {
-        var point = originalFrame.origin
-        point.y += originalFrame.height
-        return newPointInView(point)
-    }
-
-    var newBottomRight: CGPoint {
-        var point = originalFrame.origin
-        point.x += originalFrame.width
-        point.y += originalFrame.height
-        return newPointInView(point)
     }
 }

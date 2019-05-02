@@ -14,6 +14,7 @@
 		F9025ECD226A7FD00052F0F9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F9025ECB226A7FD00052F0F9 /* LaunchScreen.storyboard */; };
 		F95BB7B52277BF530009E1AF /* Frame-2.png in Resources */ = {isa = PBXBuildFile; fileRef = F95BB7B42277BF520009E1AF /* Frame-2.png */; };
 		F989B6B42278C2C2002092EC /* duplicateViewExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F989B6B32278C2C2002092EC /* duplicateViewExtensions.swift */; };
+		F989B6B62279FD59002092EC /* VideoComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F989B6B52279FD59002092EC /* VideoComposer.swift */; };
 		F9939C7A226F9FB600B11157 /* AV.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9939C79226F9FB600B11157 /* AV.swift */; };
 		F9939C7C2270D2B400B11157 /* View+extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9939C7B2270D2B400B11157 /* View+extension.swift */; };
 		F9939C7E2273B0A100B11157 /* ImageVideoCreator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9939C7D2273B0A100B11157 /* ImageVideoCreator.swift */; };
@@ -30,6 +31,7 @@
 		F9025ECE226A7FD00052F0F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F95BB7B42277BF520009E1AF /* Frame-2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Frame-2.png"; sourceTree = "<group>"; };
 		F989B6B32278C2C2002092EC /* duplicateViewExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = duplicateViewExtensions.swift; path = VideoMerger/duplicateViewExtensions.swift; sourceTree = "<group>"; };
+		F989B6B52279FD59002092EC /* VideoComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoComposer.swift; sourceTree = "<group>"; };
 		F9939C79226F9FB600B11157 /* AV.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AV.swift; sourceTree = "<group>"; };
 		F9939C7B2270D2B400B11157 /* View+extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+extension.swift"; sourceTree = "<group>"; };
 		F9939C7D2273B0A100B11157 /* ImageVideoCreator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ImageVideoCreator.swift; path = VideoMerger/ImageVideoCreator.swift; sourceTree = "<group>"; };
@@ -72,6 +74,7 @@
 				F9F311B9226A987B006DD3E1 /* SampleVideo_1280x720_1mb.mp4 */,
 				F9025EC2226A7FCD0052F0F9 /* AppDelegate.swift */,
 				F9025EC4226A7FCD0052F0F9 /* ViewController.swift */,
+				F989B6B52279FD59002092EC /* VideoComposer.swift */,
 				F9939C79226F9FB600B11157 /* AV.swift */,
 				F9939C7B2270D2B400B11157 /* View+extension.swift */,
 				F9025EC6226A7FCD0052F0F9 /* Main.storyboard */,
@@ -157,6 +160,7 @@
 			files = (
 				F9025EC5226A7FCD0052F0F9 /* ViewController.swift in Sources */,
 				F9939C7A226F9FB600B11157 /* AV.swift in Sources */,
+				F989B6B62279FD59002092EC /* VideoComposer.swift in Sources */,
 				F989B6B42278C2C2002092EC /* duplicateViewExtensions.swift in Sources */,
 				F9939C7C2270D2B400B11157 /* View+extension.swift in Sources */,
 				F9025EC3226A7FCD0052F0F9 /* AppDelegate.swift in Sources */,
